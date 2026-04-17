@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:electrobun.dev)",
+      "WebSearch",
+      "WebFetch(domain:blackboard.sh)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:news.ycombinator.com)",
+      "Bash(gh api *)",
+      "Bash(gh search *)",
+      "Skill(update-config)",
+      "Bash(npm view *)",
+      "Bash(xargs ls *)",
+      "Bash(ls -la /Users/ctse/code/effect-smol/packages/sql/*/src/)",
+      "Bash(find *)",
+      "Bash(bunx *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' | { read -r cmd; echo \"$cmd\" | grep -q 'git commit' && echo \"$cmd\" | grep -qi 'co-auth''or' && printf '{\"decision\":\"block\",\"reason\":\"Commit messages must not contain co-author trailers.\"}' || true; }"
+          }
+        ]
+      }
+    ]
+  }
+}
