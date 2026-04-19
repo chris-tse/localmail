@@ -4,6 +4,7 @@ import * as SqlClient from "effect/unstable/sql/SqlClient";
 export default Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
 
+  yield* sql`PRAGMA journal_mode = WAL`;
   yield* sql`PRAGMA foreign_keys = ON`;
 
   // Accounts
@@ -39,8 +40,8 @@ export default Effect.gen(function* () {
       sort_order      INTEGER NOT NULL DEFAULT 0,
       is_active       INTEGER NOT NULL DEFAULT 1,
 
-      created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     )
   `;
   yield* sql`CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)`;
@@ -111,8 +112,8 @@ export default Effect.gen(function* () {
 
       size_bytes      INTEGER,
 
-      received_at     TEXT NOT NULL DEFAULT (datetime('now')),
-      synced_at       TEXT NOT NULL DEFAULT (datetime('now')),
+      received_at     TEXT,
+      synced_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
       UNIQUE(folder_id, uid)
     )
@@ -150,7 +151,7 @@ export default Effect.gen(function* () {
       frequency       INTEGER NOT NULL DEFAULT 1,
       last_seen_at    TEXT NOT NULL,
 
-      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+      created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     )
   `;
   yield* sql`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)`;
@@ -169,8 +170,7 @@ export default Effect.gen(function* () {
     )
   `;
 
-  // FTS triggers — use raw exec since triggers contain BEGIN/END blocks
-  // that conflict with template literal parsing
+  // Effect SQL can execute static trigger bodies as tagged template statements.
   yield* sql`
     CREATE TRIGGER IF NOT EXISTS messages_fts_insert AFTER INSERT ON messages BEGIN
       INSERT INTO messages_fts(rowid, subject, from_address, to_addresses, body_text)
@@ -190,5 +190,23 @@ export default Effect.gen(function* () {
       INSERT INTO messages_fts(rowid, subject, from_address, to_addresses, body_text)
       VALUES (new.rowid, new.subject, new.from_address, new.to_addresses, new.body_text);
     END
+  `;
+
+  // Sync State
+  yield* sql`
+    CREATE TABLE IF NOT EXISTS sync_state (
+      folder_id       TEXT PRIMARY KEY REFERENCES folders(id) ON DELETE CASCADE,
+
+      sync_from       TEXT,
+
+      last_uid        INTEGER,
+      last_modseq     TEXT,
+
+      status          TEXT NOT NULL DEFAULT 'idle',
+      error_message   TEXT,
+      last_full_sync  TEXT,
+
+      updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    )
   `;
 });

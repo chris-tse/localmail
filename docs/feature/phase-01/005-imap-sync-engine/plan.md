@@ -27,6 +27,14 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 
 ## Scope
 
+### Design direction
+
+- Build the sync engine inside the app for now, using `src/server/sync/` modules.
+- Keep the sync orchestration separated from concrete app storage and IMAP transport details so it can be extracted later into a standalone `packages/sync-engine` package if that becomes useful.
+- Treat `imapflow` as the IMAP protocol client, not the full sync engine. Localmail still owns sync orchestration, cursor/state persistence, retries, folder/message normalization, and SQLite writes.
+- Long term, provider adapters should massage Gmail API, Microsoft Graph, IMAP, or other provider-specific data into a common Localmail folder/message/attachment/flag/cursor shape. For MVP, proceed with the planned Gmail OAuth + ImapFlow IMAP path and avoid spreading IMAP-specific assumptions beyond the sync boundary.
+- Prefer explicit storage operations such as `upsertFolderWithSyncState` or `ensureFolderSyncState` over hidden database triggers, so the folder + `sync_state` invariant remains visible at the sync boundary.
+
 ### 1. Create the IMAP connection wrapper
 
 - Location: `src/server/sync/connection.ts`
@@ -71,7 +79,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - `syncFolders(accountId)`:
   1. `LIST "" "*"` — get all folders
   2. Map each folder to its role using the provider adapter
-  3. Upsert folders into the `folders` table
+  3. Upsert folders into the `folders` table through a single storage helper that also ensures one `sync_state` row per folder
   4. Store uid_validity, uid_next from SELECT response
 
 ### 5. Create the message sync logic

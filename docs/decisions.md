@@ -117,6 +117,26 @@ Building full autodiscovery pipeline for generic accounts (Q9 option b).
 **Why:** Good UX without Exchange-style complexity. Effect's `orElse` chaining and
 `raceAll` for heuristic probing make the implementation clean.
 
+## 2026-04-19
+
+### Foreign keys enabled by the shared SQLite layer
+
+Every application SQLite connection must go through `src/server/db/client.ts`, which enables
+`PRAGMA foreign_keys = ON` after opening the connection. `@effect/sql-sqlite-bun` enables WAL
+by default, and migrations also set both WAL and foreign keys, but SQLite foreign-key
+enforcement is connection-local.
+**Why:** Enabling foreign keys only during migrations does not protect normal application
+queries. The shared layer makes cascade behavior and invalid-reference failures consistent
+across scripts, tests, and server code.
+
+### Disposable local databases during early development
+
+Until Localmail has non-disposable user data, database schema changes may be squashed back into
+`0001_initial_schema.ts`, and local development databases may be deleted and recreated.
+**Why:** The project is currently solo development with no production or shared databases to
+preserve. Keeping one canonical migration is easier to audit than carrying compatibility
+migrations for throwaway local scaffold data.
+
 ## 2026-04-20
 
 ### Google OAuth credentials distribution for desktop
