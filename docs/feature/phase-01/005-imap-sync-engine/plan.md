@@ -102,7 +102,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
   - Return deterministic thread_id (hash of root Message-ID)
 
 ### 8. Wire up the sync engine as an Effect Layer
-- `SyncEngineLayer` depends on: `DatabaseLayer`, `OAuthService`, `ProviderAdapter`
+- `SyncEngineLayer` depends on: `SqliteLive`/`SqlClient`, `OAuthService`, `ProviderAdapter`
 - `startSync(accountId)`:
   1. Connect to IMAP
   2. Sync folders

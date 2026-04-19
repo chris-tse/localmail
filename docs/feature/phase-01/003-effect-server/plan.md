@@ -12,7 +12,7 @@ Set up the Effect-powered Bun HTTP server with Layer composition, static file se
 
 ## Prerequisites
 - 001-project-scaffold (dependencies, Vite config)
-- 002-database-setup (DatabaseLayer)
+- 002-database-setup (`SqliteLive` from the Effect SQL SQLite client)
 
 ## References
 - `TECH_SPEC.md` §2 — architecture, process model
@@ -25,10 +25,10 @@ Set up the Effect-powered Bun HTTP server with Layer composition, static file se
 - Location: `src/server/index.ts`
 - Use `BunHttpServer` from `@effect/platform-bun`
 - Compose layers:
-  - `DatabaseLayer` (from 002)
+  - `SqliteLive` (from 002)
   - `HttpApiBuilder.layer(Api)` (API routes — initially just health check)
   - `HttpStaticServer` serving `dist/client/` (SPA mode with index.html fallback)
-- Bind to `127.0.0.1:3000` (localhost only, per TECH_SPEC §9)
+- Bind to `127.0.0.1:4000` (localhost only, per TECH_SPEC §9; port follows the 2026-04-16 development decision and Vite proxy config)
 - Run inside `ManagedRuntime` or `Effect.runFork` with proper shutdown handling
 
 ### 2. Create the API definition shell
@@ -63,9 +63,9 @@ Set up the Effect-powered Bun HTTP server with Layer composition, static file se
 - How to configure CORS if needed (probably not — same origin)
 
 ## Verification
-- `bun run dev` starts the server on `localhost:3000`
-- `curl http://localhost:3000/health` returns `{ "status": "ok" }`
-- Vite-built client files served at `localhost:3000/` (once built)
+- `bun run dev` starts the server on `localhost:4000`
+- `curl http://localhost:4000/health` returns `{ "status": "ok" }`
+- Vite-built client files served at `localhost:4000/` (once built)
 - Server shuts down cleanly on Ctrl+C
 - `bunx tsc --noEmit` passes
 

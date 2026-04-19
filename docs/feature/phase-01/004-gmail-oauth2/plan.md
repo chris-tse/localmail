@@ -17,6 +17,7 @@ Implement the Gmail OAuth2 authentication flow: generate auth URL with PKCE, han
 ## References
 - `TECH_SPEC.md` §6.1 — OAuth2 flow
 - `TECH_SPEC.md` §6.3 — encryption at rest
+- `docs/decisions.md` — OAuth callback runs on the main server; development server port is `4000`
 - Google OAuth2 docs for Gmail IMAP scope
 
 ## Scope
@@ -36,7 +37,7 @@ Implement the Gmail OAuth2 authentication flow: generate auth URL with PKCE, han
   - Auth URL: `https://accounts.google.com/o/oauth2/v2/auth`
   - Token URL: `https://oauth2.googleapis.com/token`
   - Scope: `https://mail.google.com/`
-  - Redirect URI: `http://localhost:3000/auth/callback`
+  - Redirect URI: `http://localhost:4000/auth/callback`
 - Functions:
   - `generateAuthUrl(state, codeVerifier)` — returns auth URL with PKCE challenge
   - `exchangeCode(code, codeVerifier)` — exchanges code for access_token + refresh_token
@@ -71,7 +72,8 @@ Implement the Gmail OAuth2 authentication flow: generate auth URL with PKCE, han
 
 ### 6. Create setup-oauth helper script
 - Location: `scripts/setup-oauth.ts`
-- Interactive helper that guides the user through:
+- Development-only helper for local credentials override; the product direction is bundled OAuth credentials per `TECH_SPEC.md` §6.1
+- Interactive helper that guides maintainers/developers through:
   1. Creating a Google Cloud project
   2. Enabling the Gmail API
   3. Creating OAuth2 credentials
@@ -89,6 +91,7 @@ Implement the Gmail OAuth2 authentication flow: generate auth URL with PKCE, han
 - IMAP connection succeeds with OAuth2 credentials
 - SMTP connection succeeds with OAuth2 credentials
 - Account row created in DB with correct fields
+- OAuth redirect URI uses `http://localhost:4000/auth/callback`
 - `bunx tsc --noEmit` passes
 - `bun test` passes (unit tests for crypto, token exchange mocking)
 
