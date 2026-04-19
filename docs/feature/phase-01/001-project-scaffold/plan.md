@@ -20,6 +20,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
 
 - `TECH_SPEC.md` §10 — project structure
 - `TECH_SPEC.md` §11 — dependencies
+- `docs/decisions.md` — Effect SQL replaces Drizzle; dev server runs on `localhost:4000`
 
 ## Scope
 
@@ -30,22 +31,18 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
   - `dev` — single command that bootstraps everything (see §10 below)
   - `build` — client build (Vite) + tsc check
   - `test` — `bun test`
-  - `db:generate` — `bunx drizzle-kit generate`
-  - `db:migrate` — `bunx drizzle-kit migrate`
-  - `db:push` — `bunx drizzle-kit push`
-  - `db:studio` — `bunx drizzle-kit studio`
+  - `db:migrate` — run the Effect SQL migrator
   - `db:seed` — seed the database with mock data for offline development
   - `typecheck` — `bunx tsc --noEmit`
 
 ### 2. Install server dependencies
 
 - `effect`
-- `@effect/platform`
 - `@effect/platform-bun`
+- `@effect/sql-sqlite-bun`
 - `imapflow`
 - `nodemailer`
 - `mailparser`
-- `drizzle-orm`
 - `ulid`
 
 ### 3. Install client dependencies
@@ -62,7 +59,6 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
 - `typescript`
 - `bun-types`
 - `@types/react` + `@types/react-dom`
-- `drizzle-kit`
 - `vite` + `@vitejs/plugin-react`
 - `@types/nodemailer`
 - `@types/mailparser`
@@ -81,7 +77,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
   - React plugin
   - Tailwind CSS plugin
   - Output to `dist/client/`
-  - Proxy API requests to Bun server in dev mode
+  - Proxy API requests to the Bun server on `localhost:4000` in dev mode
 
 ### 7. Create directory skeleton
 
@@ -159,7 +155,8 @@ The seed data is for development only. The app should work fully offline with th
   - Creates `data/localmail.db`
   - Runs migrations
   - Seeds mock data
-  - Starts server on `localhost:3000`
+  - Starts server on `localhost:4000`
+  - Starts Vite dev server on `localhost:5173`
   - Health endpoint responds
 - `bunx tsc --noEmit` passes
 - Directory structure matches TECH_SPEC §10
@@ -173,5 +170,6 @@ The seed data is for development only. The app should work fully offline with th
 - `.env.example`
 - Updated `.gitignore`
 - Directory skeleton under `src/`
+- `scripts/migrate.ts`
 - `scripts/seed.ts`
-- Dev bootstrap logic in `src/server/index.ts` (or a separate `scripts/dev.ts`)
+- Dev bootstrap logic in `scripts/dev.ts`

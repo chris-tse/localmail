@@ -1,8 +1,8 @@
-import { SqliteClient } from "@effect/sql-sqlite-bun";
 import { SqliteMigrator } from "@effect/sql-sqlite-bun";
 import * as Migrator from "effect/unstable/sql/Migrator";
 import { Effect } from "effect";
 
+import { SqliteLive } from "../src/server/db/client.ts";
 import migration0001 from "../src/server/db/migrations/0001_initial_schema.ts";
 
 const migrate = SqliteMigrator.run({
@@ -10,8 +10,6 @@ const migrate = SqliteMigrator.run({
     "0001_initial_schema": migration0001,
   }),
 });
-
-const SqliteLive = SqliteClient.layer({ filename: "./data/localmail.db" });
 
 Effect.runPromise(migrate.pipe(Effect.provide(SqliteLive)))
   .then((applied) => {

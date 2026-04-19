@@ -9,6 +9,8 @@
     "fmt:check": "oxfmt --check",
     "build": "bunx vite build && bunx tsc --noEmit",
     "test": "bun test",
+    "db:clean": "rm -f data/localmail.db data/localmail.db-wal data/localmail.db-shm",
+    "db:migrate": "bun run scripts/migrate.ts",
     "db:seed": "bun run scripts/seed.ts",
     "typecheck": "bunx tsc --noEmit"
   },

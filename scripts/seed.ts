@@ -1,7 +1,8 @@
-import { SqliteClient } from "@effect/sql-sqlite-bun";
 import * as SqlClient from "effect/unstable/sql/SqlClient";
 import { Effect } from "effect";
 import { ulid } from "ulid";
+
+import { SqliteLive } from "../src/server/db/client.ts";
 
 const seed = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
@@ -48,6 +49,10 @@ const seed = Effect.gen(function* () {
     yield* sql`
       INSERT INTO folders (id, account_id, path, name, role, delimiter, sort_order, total_messages, unread_messages)
       VALUES (${id}, ${f.accountId}, ${f.path}, ${f.name}, ${f.role}, '/', ${f.order}, 0, 0)
+    `;
+    yield* sql`
+      INSERT INTO sync_state (folder_id, status)
+      VALUES (${id}, 'idle')
     `;
   }
 
@@ -285,9 +290,6 @@ const seed = Effect.gen(function* () {
   console.log(`  ${totalUnread1 + totalUnread2} unread`);
   console.log("Done!");
 });
-
-// Run with a real SQLite client
-const SqliteLive = SqliteClient.layer({ filename: "./data/localmail.db" });
 
 Effect.runPromise(seed.pipe(Effect.provide(SqliteLive))).catch((err) => {
   console.error("Seed failed:", err);

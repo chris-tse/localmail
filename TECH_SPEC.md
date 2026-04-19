@@ -143,8 +143,8 @@ CREATE TABLE accounts (
   sort_order      INTEGER NOT NULL DEFAULT 0,
   is_active       INTEGER NOT NULL DEFAULT 1,
 
-  created_at      TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 CREATE INDEX idx_accounts_email ON accounts(email);
@@ -223,8 +223,8 @@ CREATE TABLE messages (
 
   size_bytes      INTEGER,
 
-  received_at     TEXT NOT NULL DEFAULT (datetime('now')),
-  synced_at       TEXT NOT NULL DEFAULT (datetime('now')),
+  received_at     TEXT,
+  synced_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 
   UNIQUE(folder_id, uid)
 );
@@ -266,7 +266,7 @@ CREATE TABLE contacts (
   frequency       INTEGER NOT NULL DEFAULT 1,
   last_seen_at    TEXT NOT NULL,
 
-  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 
 CREATE INDEX idx_contacts_email ON contacts(email);
@@ -317,7 +317,7 @@ CREATE TABLE sync_state (
   error_message   TEXT,
   last_full_sync  TEXT,
 
-  updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+  updated_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 ```
 
