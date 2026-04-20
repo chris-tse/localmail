@@ -93,10 +93,11 @@ scripts/
 ```
 
 ### 8. Create .env.example
-Document required environment variables:
-- `GOOGLE_CLIENT_ID` (optional — only needed when testing real OAuth)
-- `GOOGLE_CLIENT_SECRET` (optional)
+Document development/build-time environment variables:
+- `GOOGLE_CLIENT_ID` (optional contributor/release-build override for the Localmail-owned OAuth desktop client; not required for mock-data development)
 - `ENCRYPTION_KEY` (optional — derived from machine if not set)
+
+Do not document `GOOGLE_CLIENT_SECRET` as part of the shipped Gmail desktop flow. Installed apps cannot keep a client secret confidential; Gmail OAuth uses PKCE instead.
 
 ### 9. Update .gitignore
 Add:

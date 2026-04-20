@@ -102,3 +102,22 @@ who don't want to connect a real account during development.
 Building full autodiscovery pipeline for generic accounts (Q9 option b).
 **Why:** Good UX without Exchange-style complexity. Effect's `orElse` chaining and
 `raceAll` for heuristic probing make the implementation clean.
+
+## 2026-04-20
+
+### Google OAuth credentials distribution for desktop
+Localmail uses a Localmail-owned Google Cloud project and OAuth desktop client for Gmail
+authorization. Packaged desktop builds include the public Google OAuth client ID, but do not
+ship or require a Google client secret. Users should never create their own Google Cloud
+project just to connect Gmail.
+**Why:** Localmail is installed on the user's machine, so anything bundled with the app can be
+extracted and cannot be treated as a confidential secret. Google's installed-app flow is the
+intended model for this: open the system browser, use a loopback redirect URI, and protect the
+authorization-code exchange with PKCE (`S256`). The Google client ID identifies Localmail; it
+is not a password. Gmail's restricted scopes still require Localmail-owned OAuth consent
+configuration, verification, and release gating before broad public use.
+**Implications:**
+- `GOOGLE_CLIENT_ID` is build/developer configuration, not an end-user setup step.
+- `GOOGLE_CLIENT_SECRET` is not used by the shipped desktop Gmail flow.
+- OAuth must open in the system browser, not an embedded app webview.
+- Development can use test users on the Localmail-owned OAuth app until verification is complete.
