@@ -39,6 +39,7 @@
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "bun-types": "latest",
+    "oxfmt": "^0.46.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.2"
   }
