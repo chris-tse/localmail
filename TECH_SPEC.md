@@ -17,11 +17,11 @@ A self-hosted email client that runs as a local Bun server, providing a web-base
 
 Localmail v1 supports a small number of setup paths while keeping the underlying mail transport model consistent.
 
-| Account type | Auth method | Incoming | Outgoing | Setup style | Notes |
-|--------------|-------------|----------|----------|-------------|-------|
-| Gmail | OAuth2 | IMAP | SMTP | Preset | Gmail labels behave like virtual folders; `\All Mail` is special |
-| Outlook / Microsoft 365 | OAuth2 | IMAP | SMTP | Preset | More aggressive rate limiting; tenant settings may disable IMAP/SMTP AUTH |
-| Generic IMAP/SMTP | Password or app-specific password | IMAP | SMTP | Autodiscovery first, manual fallback | Covers iCloud, Zoho, Fastmail, custom domains, and other standards-based providers |
+| Account type            | Auth method                       | Incoming | Outgoing | Setup style                          | Notes                                                                              |
+| ----------------------- | --------------------------------- | -------- | -------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
+| Gmail                   | OAuth2                            | IMAP     | SMTP     | Preset                               | Gmail labels behave like virtual folders; `\All Mail` is special                   |
+| Outlook / Microsoft 365 | OAuth2                            | IMAP     | SMTP     | Preset                               | More aggressive rate limiting; tenant settings may disable IMAP/SMTP AUTH          |
+| Generic IMAP/SMTP       | Password or app-specific password | IMAP     | SMTP     | Autodiscovery first, manual fallback | Covers iCloud, Zoho, Fastmail, custom domains, and other standards-based providers |
 
 ### 1.3 Core Principles
 
@@ -341,10 +341,12 @@ This matches the behavior of Thunderbird and most desktop clients. Edge cases wi
 Localmail should optimize for minimal user input.
 
 **Preset accounts:**
+
 - Gmail → OAuth2 flow with Google
 - Outlook / Microsoft 365 → OAuth2 flow with Microsoft
 
 **Generic accounts:**
+
 1. User enters email address
 2. Localmail attempts autodiscovery
 3. If settings are found, user enters password or app-specific password
@@ -369,12 +371,12 @@ Autodiscovery should be layered, in this order. Model the pipeline as a chain of
 
 ### 4.3 Autodiscovery Examples
 
-| Email domain | Discovery signal | Inferred provider | Result |
-|--------------|------------------|-------------------|--------|
-| `user@gmail.com` | Exact domain preset | Gmail | OAuth2 preset |
-| `user@contoso.com` | MX → `*.protection.outlook.com` | Microsoft 365 | Outlook preset |
-| `user@christse.dev` | MX → `mx01.mail.icloud.com` | iCloud | Generic password flow with iCloud settings |
-| `user@chris-tse.com` | MX → `mx.zoho.com` | Zoho | Generic password flow with Zoho settings |
+| Email domain         | Discovery signal                | Inferred provider | Result                                     |
+| -------------------- | ------------------------------- | ----------------- | ------------------------------------------ |
+| `user@gmail.com`     | Exact domain preset             | Gmail             | OAuth2 preset                              |
+| `user@contoso.com`   | MX → `*.protection.outlook.com` | Microsoft 365     | Outlook preset                             |
+| `user@christse.dev`  | MX → `mx01.mail.icloud.com`     | iCloud            | Generic password flow with iCloud settings |
+| `user@chris-tse.com` | MX → `mx.zoho.com`              | Zoho              | Generic password flow with Zoho settings   |
 
 ### 4.4 Credential Verification
 
@@ -384,11 +386,13 @@ Discovery and authentication are separate steps.
 - Verification tests those settings with the user’s credentials
 
 For password-based accounts:
+
 1. Test IMAP login
 2. Test SMTP auth
 3. Save only if both succeed
 
 For OAuth2 accounts:
+
 1. Complete provider OAuth flow
 2. Exchange code for tokens
 3. Test IMAP and SMTP with OAuth tokens
@@ -426,6 +430,7 @@ The sync engine manages one `ImapFlow` connection per active account.
 **Per-account concurrency:** Use `FiberMap<AccountId, void>` to manage one sync fiber per active account. Adding/removing accounts adds/removes fibers. The FiberMap is scoped to the server's lifetime — on shutdown, all sync fibers are interrupted and all IMAP connections are cleaned up automatically.
 
 **Initial sync (account setup):**
+
 1. Connect via IMAP, list all folders.
 2. Map special-use folders using IMAP `\Special-Use` attributes or heuristics.
 3. For each folder, sync the most recent N days of messages (default 30 days).
@@ -434,6 +439,7 @@ The sync engine manages one `ImapFlow` connection per active account.
 6. Store everything in SQLite.
 
 **Ongoing sync:**
+
 - **IDLE** — maintain an IDLE connection on the currently-viewed folder when supported. The IDLE loop runs as its own fiber; interrupting it (via `Fiber.interrupt`) cleanly breaks the IDLE command so the connection can SELECT another folder.
 - **Polling** — use `Effect.repeat(syncFolder, Schedule.spaced("5 minutes"))` for non-IDLE folders. CONDSTORE or UID-based delta detection per folder.
 - **On-demand** — when the user scrolls past the cached window, fetch older messages from IMAP and cache them
@@ -482,6 +488,7 @@ MVP adapters:
 ### 5.3 Provider-Specific Notes
 
 **Gmail quirks:**
+
 - `[Gmail]/All Mail` contains all messages; other folders may act like label views
 - Deleting in a label-folder may remove the label rather than delete the underlying message
 - Archive = remove `INBOX` label
@@ -489,12 +496,14 @@ MVP adapters:
 - Gmail threading hints may be available but should not replace the normalized thread model
 
 **Outlook quirks:**
+
 - More aggressive rate limiting — use `Effect.retry` with `Schedule.exponential("2 seconds")` composed with `Schedule.jittered` to avoid thundering-herd patterns. Tag rate-limit errors as a distinct error type so the retry schedule can be longer than for transient network errors.
 - OAuth2 token refresh uses Microsoft-specific endpoints
 - Some tenants disable IMAP or SMTP AUTH
 - `Junk Email` instead of `Spam`
 
 **Generic account quirks:**
+
 - Settings vary widely
 - Some providers require app-specific passwords
 - Some providers are slower or have weaker IMAP capabilities
@@ -502,13 +511,14 @@ MVP adapters:
 
 ### 5.4 Body Caching Strategy
 
-| Scenario | Body cached? |
-|----------|-------------|
-| Message within sync window (recent 30 days) | Yes — fetched during sync |
-| Message viewed by user outside window | Yes — fetched on demand, cached permanently |
-| Message never viewed, outside window | No — envelope/flags only |
+| Scenario                                    | Body cached?                                |
+| ------------------------------------------- | ------------------------------------------- |
+| Message within sync window (recent 30 days) | Yes — fetched during sync                   |
+| Message viewed by user outside window       | Yes — fetched on demand, cached permanently |
+| Message never viewed, outside window        | No — envelope/flags only                    |
 
 When the user opens a message without a cached body:
+
 1. Fetch `BODY[]` via IMAP (acquires mailbox lock — use `Effect.acquireRelease` to guarantee the lock is released even on interruption or parse failure)
 2. Parse MIME with `mailparser`
 3. Store `body_text` and `body_html`
@@ -525,12 +535,13 @@ Localmail ships with **bundled OAuth credentials** for Gmail and Outlook. Users 
 
 **What this requires:**
 
-| Provider | Registration | Verification | Restricted scope hurdle |
-|----------|-------------|-------------|------------------------|
-| Gmail | Google Cloud Console project | Google OAuth verification review + **CASA Tier 2 security assessment** | `https://mail.google.com/` is a restricted scope — Google requires a third-party security audit before the app can be used by more than 100 users without a warning screen |
-| Outlook | Azure AD (Entra) app registration | Microsoft publisher verification | IMAP/SMTP scopes are not restricted — verification is lighter than Google's |
+| Provider | Registration                      | Verification                                                           | Restricted scope hurdle                                                                                                                                                    |
+| -------- | --------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gmail    | Google Cloud Console project      | Google OAuth verification review + **CASA Tier 2 security assessment** | `https://mail.google.com/` is a restricted scope — Google requires a third-party security audit before the app can be used by more than 100 users without a warning screen |
+| Outlook  | Azure AD (Entra) app registration | Microsoft publisher verification                                       | IMAP/SMTP scopes are not restricted — verification is lighter than Google's                                                                                                |
 
 **Pre-launch steps (before public release):**
+
 1. Register a Google Cloud project under a Localmail-owned Google account
 2. Configure OAuth consent screen with privacy policy + homepage URLs
 3. Request verification for the `https://mail.google.com/` scope
@@ -561,10 +572,10 @@ User clicks "Add Account" → selects Gmail or Outlook
 
 **OAuth2 scopes required:**
 
-| Provider | Scope |
-|----------|-------|
-| Gmail | `https://mail.google.com/` |
-| Outlook | `https://outlook.office365.com/IMAP.AccessAsUser.All https://outlook.office365.com/SMTP.Send offline_access` |
+| Provider | Scope                                                                                                        |
+| -------- | ------------------------------------------------------------------------------------------------------------ |
+| Gmail    | `https://mail.google.com/`                                                                                   |
+| Outlook  | `https://outlook.office365.com/IMAP.AccessAsUser.All https://outlook.office365.com/SMTP.Send offline_access` |
 
 ### 6.3 Password / App-Specific Password Flow (Generic Accounts)
 
@@ -603,78 +614,118 @@ A future enhancement could integrate with the OS keychain (macOS Keychain, Windo
 The API is defined using Effect's `HttpApi` + `HttpApiGroup` + `HttpApiEndpoint` modules. Schemas are defined with `effect/Schema` (replacing Zod). Each group is implemented via `HttpApiBuilder.group()` and composed into a single `HttpApi` that is served by `BunHttpServer`. A type-safe client can be derived from the same API definition via `HttpApiClient`.
 
 ```ts
-import { Schema } from "effect"
-import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "effect/unstable/httpapi"
+import { Schema } from "effect";
+import { HttpApi, HttpApiEndpoint, HttpApiGroup } from "effect/unstable/httpapi";
 
 // --- Schemas (effect/Schema replaces Zod) ---
 
-const AccountId = Schema.String.pipe(Schema.brand("AccountId"))
-const FolderId = Schema.String.pipe(Schema.brand("FolderId"))
-const MessageId = Schema.String.pipe(Schema.brand("MessageId"))
+const AccountId = Schema.String.pipe(Schema.brand("AccountId"));
+const FolderId = Schema.String.pipe(Schema.brand("FolderId"));
+const MessageId = Schema.String.pipe(Schema.brand("MessageId"));
 
 const Cursor = Schema.Struct({
   date: Schema.String,
   id: Schema.String,
-})
+});
 
 const MessageFlags = Schema.Struct({
   is_read: Schema.optional(Schema.Boolean),
   is_starred: Schema.optional(Schema.Boolean),
   is_deleted: Schema.optional(Schema.Boolean),
-})
+});
 
 const AddressSchema = Schema.Struct({
   name: Schema.optional(Schema.String),
   address: Schema.String,
-})
+});
 
 // --- API Definition ---
 
 const AccountsGroup = HttpApiGroup.make("accounts")
   .add(HttpApiEndpoint.get("list", "/accounts", { success: Schema.Array(Account) }))
   .add(HttpApiEndpoint.get("get", "/accounts/:id", { success: Account }))
-  .add(HttpApiEndpoint.post("create", "/accounts", { success: Account, payload: CreateAccountInput }))
-  .add(HttpApiEndpoint.put("update", "/accounts/:id", { success: Account, payload: UpdateAccountInput }))
+  .add(
+    HttpApiEndpoint.post("create", "/accounts", { success: Account, payload: CreateAccountInput }),
+  )
+  .add(
+    HttpApiEndpoint.put("update", "/accounts/:id", {
+      success: Account,
+      payload: UpdateAccountInput,
+    }),
+  )
   .add(HttpApiEndpoint.del("delete", "/accounts/:id", { success: Schema.Void }))
-  .add(HttpApiEndpoint.post("reauth", "/accounts/:id/reauth", { success: Schema.Struct({ authUrl: Schema.String }) }))
-  .add(HttpApiEndpoint.get("autodiscover", "/accounts/autodiscover", { success: AutodiscoveryResult }))
-  .add(HttpApiEndpoint.post("testConnection", "/accounts/test-connection", { success: TestConnectionResult, payload: TestConnectionInput }))
+  .add(
+    HttpApiEndpoint.post("reauth", "/accounts/:id/reauth", {
+      success: Schema.Struct({ authUrl: Schema.String }),
+    }),
+  )
+  .add(
+    HttpApiEndpoint.get("autodiscover", "/accounts/autodiscover", { success: AutodiscoveryResult }),
+  )
+  .add(
+    HttpApiEndpoint.post("testConnection", "/accounts/test-connection", {
+      success: TestConnectionResult,
+      payload: TestConnectionInput,
+    }),
+  );
 
 const FoldersGroup = HttpApiGroup.make("folders")
-  .add(HttpApiEndpoint.get("list", "/accounts/:accountId/folders", { success: Schema.Array(Folder) }))
-  .add(HttpApiEndpoint.post("sync", "/folders/:folderId/sync", { success: SyncResult }))
+  .add(
+    HttpApiEndpoint.get("list", "/accounts/:accountId/folders", { success: Schema.Array(Folder) }),
+  )
+  .add(HttpApiEndpoint.post("sync", "/folders/:folderId/sync", { success: SyncResult }));
 
 const MessagesGroup = HttpApiGroup.make("messages")
   .add(HttpApiEndpoint.get("list", "/folders/:folderId/messages", { success: PaginatedMessages }))
   .add(HttpApiEndpoint.get("get", "/messages/:id", { success: MessageDetail }))
-  .add(HttpApiEndpoint.patch("updateFlags", "/messages/flags", { success: Schema.Void, payload: Schema.Struct({ ids: Schema.Array(MessageId), flags: MessageFlags }) }))
-  .add(HttpApiEndpoint.post("move", "/messages/move", { success: Schema.Void, payload: Schema.Struct({ ids: Schema.Array(MessageId), targetFolderId: FolderId }) }))
-  .add(HttpApiEndpoint.del("delete", "/messages", { success: Schema.Void }))
+  .add(
+    HttpApiEndpoint.patch("updateFlags", "/messages/flags", {
+      success: Schema.Void,
+      payload: Schema.Struct({ ids: Schema.Array(MessageId), flags: MessageFlags }),
+    }),
+  )
+  .add(
+    HttpApiEndpoint.post("move", "/messages/move", {
+      success: Schema.Void,
+      payload: Schema.Struct({ ids: Schema.Array(MessageId), targetFolderId: FolderId }),
+    }),
+  )
+  .add(HttpApiEndpoint.del("delete", "/messages", { success: Schema.Void }));
 
 const ComposeGroup = HttpApiGroup.make("compose")
-  .add(HttpApiEndpoint.post("send", "/compose/send", {
-    success: Schema.Struct({ messageId: Schema.String }),
-    payload: Schema.Struct({
-      accountId: AccountId,
-      to: Schema.Array(AddressSchema),
-      cc: Schema.optional(Schema.Array(AddressSchema)),
-      bcc: Schema.optional(Schema.Array(AddressSchema)),
-      subject: Schema.String,
-      bodyHtml: Schema.String,
-      bodyText: Schema.String,
-      inReplyTo: Schema.optional(Schema.String),
+  .add(
+    HttpApiEndpoint.post("send", "/compose/send", {
+      success: Schema.Struct({ messageId: Schema.String }),
+      payload: Schema.Struct({
+        accountId: AccountId,
+        to: Schema.Array(AddressSchema),
+        cc: Schema.optional(Schema.Array(AddressSchema)),
+        bcc: Schema.optional(Schema.Array(AddressSchema)),
+        subject: Schema.String,
+        bodyHtml: Schema.String,
+        bodyText: Schema.String,
+        inReplyTo: Schema.optional(Schema.String),
+      }),
     }),
-  }))
-  .add(HttpApiEndpoint.post("saveDraft", "/compose/draft", { success: Schema.Struct({ id: Schema.String }), payload: DraftInput }))
+  )
+  .add(
+    HttpApiEndpoint.post("saveDraft", "/compose/draft", {
+      success: Schema.Struct({ id: Schema.String }),
+      payload: DraftInput,
+    }),
+  );
 
-const SearchGroup = HttpApiGroup.make("search")
-  .add(HttpApiEndpoint.get("query", "/search", { success: Schema.Array(SearchResult) }))
+const SearchGroup = HttpApiGroup.make("search").add(
+  HttpApiEndpoint.get("query", "/search", { success: Schema.Array(SearchResult) }),
+);
 
-const AttachmentsGroup = HttpApiGroup.make("attachments")
-  .add(HttpApiEndpoint.get("download", "/attachments/:id/download", { success: AttachmentDownload }))
+const AttachmentsGroup = HttpApiGroup.make("attachments").add(
+  HttpApiEndpoint.get("download", "/attachments/:id/download", { success: AttachmentDownload }),
+);
 
-const ContactsGroup = HttpApiGroup.make("contacts")
-  .add(HttpApiEndpoint.get("search", "/contacts/search", { success: Schema.Array(Contact) }))
+const ContactsGroup = HttpApiGroup.make("contacts").add(
+  HttpApiEndpoint.get("search", "/contacts/search", { success: Schema.Array(Contact) }),
+);
 
 const Api = HttpApi.make("Localmail")
   .add(AccountsGroup)
@@ -683,7 +734,7 @@ const Api = HttpApi.make("Localmail")
   .add(ComposeGroup)
   .add(SearchGroup)
   .add(AttachmentsGroup)
-  .add(ContactsGroup)
+  .add(ContactsGroup);
 ```
 
 Each group is implemented separately via `HttpApiBuilder.group(Api, "accounts", (handlers) => ...)` and composed into layers. The server entrypoint wires all group layers together with `HttpApiBuilder.layer(Api)` and serves them via `BunHttpServer`.
@@ -736,16 +787,16 @@ type WSEvent =
 
 ### 8.1 Stack
 
-| Concern | Choice | Rationale |
-|---------|--------|-----------|
-| Framework | React 19 | Familiarity; focus energy on UX, not learning a new framework |
-| Routing | TanStack Router | Type-safe, file-based routes |
-| State | Zustand | Lightweight, no boilerplate |
-| Data fetching | TanStack Query + Effect HttpApiClient | Cache invalidation, optimistic updates; type-safe client derived from server API definition |
-| Styling | Tailwind CSS | Rapid iteration on visual design |
-| Keyboard shortcuts | tinykeys | Small, composable hotkey library |
-| HTML email rendering | iframe sandbox | Isolate untrusted email HTML |
-| Rich text compose | TipTap | Extensible, headless rich text editor |
+| Concern              | Choice                                | Rationale                                                                                   |
+| -------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Framework            | React 19                              | Familiarity; focus energy on UX, not learning a new framework                               |
+| Routing              | TanStack Router                       | Type-safe, file-based routes                                                                |
+| State                | Zustand                               | Lightweight, no boilerplate                                                                 |
+| Data fetching        | TanStack Query + Effect HttpApiClient | Cache invalidation, optimistic updates; type-safe client derived from server API definition |
+| Styling              | Tailwind CSS                          | Rapid iteration on visual design                                                            |
+| Keyboard shortcuts   | tinykeys                              | Small, composable hotkey library                                                            |
+| HTML email rendering | iframe sandbox                        | Isolate untrusted email HTML                                                                |
+| Rich text compose    | TipTap                                | Extensible, headless rich text editor                                                       |
 
 ### 8.2 Layout
 
@@ -770,38 +821,41 @@ Three-panel layout, resizable:
 
 ### 8.3 Keyboard Shortcuts
 
-| Key | Action |
-|-----|--------|
-| `j` / `k` | Next / previous message |
-| `Enter` | Open selected message |
-| `e` | Archive |
-| `#` | Delete (move to trash) |
-| `r` | Reply |
-| `a` | Reply all |
-| `f` | Forward |
-| `c` | Compose new |
-| `s` | Toggle star |
-| `u` | Toggle read/unread |
-| `/` | Focus search |
-| `Esc` | Close compose / back to list |
-| `g` then `i` | Go to Inbox |
-| `g` then `s` | Go to Sent |
-| `g` then `d` | Go to Drafts |
-| `1`–`9` | Switch account (sidebar order) |
-| `Cmd+Enter` | Send message (in compose) |
-| `?` | Show keyboard shortcut overlay |
+| Key          | Action                         |
+| ------------ | ------------------------------ |
+| `j` / `k`    | Next / previous message        |
+| `Enter`      | Open selected message          |
+| `e`          | Archive                        |
+| `#`          | Delete (move to trash)         |
+| `r`          | Reply                          |
+| `a`          | Reply all                      |
+| `f`          | Forward                        |
+| `c`          | Compose new                    |
+| `s`          | Toggle star                    |
+| `u`          | Toggle read/unread             |
+| `/`          | Focus search                   |
+| `Esc`        | Close compose / back to list   |
+| `g` then `i` | Go to Inbox                    |
+| `g` then `s` | Go to Sent                     |
+| `g` then `d` | Go to Drafts                   |
+| `1`–`9`      | Switch account (sidebar order) |
+| `Cmd+Enter`  | Send message (in compose)      |
+| `?`          | Show keyboard shortcut overlay |
 
 ### 8.4 Account Setup UX
 
 Recommended add-account flows:
 
 **Gmail**
+
 - Button: `Continue with Google`
 
 **Outlook**
+
 - Button: `Continue with Microsoft`
 
 **Other email**
+
 1. User enters email address
 2. Localmail attempts autodiscovery
 3. If successful, show:
@@ -811,6 +865,7 @@ Recommended add-account flows:
 4. If unsuccessful, expand manual settings form
 
 Recommended loading states:
+
 - `Looking up your mail settings...`
 - `We found your provider`
 - `Testing incoming mail...`
@@ -933,35 +988,36 @@ localmail/
 
 ### Server
 
-| Package | Purpose |
-|---------|---------|
-| `effect` | Runtime, structured concurrency, typed errors, resource management, retry/scheduling, PubSub, `Schema` validation |
-| `@effect/platform-bun` | HTTP server (`BunHttpServer`), static file serving, WebSocket support, Bun runtime adapter |
-| `imapflow` | IMAP client |
-| `nodemailer` | SMTP sending |
-| `mailparser` | MIME parsing |
-| `drizzle-orm` + `drizzle-kit` | SQLite ORM + migrations |
-| `ulid` | Sortable unique IDs |
+| Package                       | Purpose                                                                                                           |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `effect`                      | Runtime, structured concurrency, typed errors, resource management, retry/scheduling, PubSub, `Schema` validation |
+| `@effect/platform-bun`        | HTTP server (`BunHttpServer`), static file serving, WebSocket support, Bun runtime adapter                        |
+| `imapflow`                    | IMAP client                                                                                                       |
+| `nodemailer`                  | SMTP sending                                                                                                      |
+| `mailparser`                  | MIME parsing                                                                                                      |
+| `drizzle-orm` + `drizzle-kit` | SQLite ORM + migrations                                                                                           |
+| `ulid`                        | Sortable unique IDs                                                                                               |
 
 Note: `effect/Schema` replaces Zod for all validation. `effect/unstable/httpapi` (`HttpApi` + `HttpApiBuilder`) replaces both Hono and tRPC for the HTTP layer. No separate schema validation or HTTP framework packages needed.
 
 ### Client
 
-| Package | Purpose |
-|---------|---------|
-| `react` + `react-dom` | UI framework |
-| `@tanstack/react-query` | Cache + async state + optimistic updates |
-| `@tanstack/react-router` | File-based routing |
-| `zustand` | Global state |
-| `tailwindcss` | Styling |
-| `tinykeys` | Keyboard shortcuts |
-| `@tiptap/react` | Rich text editor |
+| Package                  | Purpose                                  |
+| ------------------------ | ---------------------------------------- |
+| `react` + `react-dom`    | UI framework                             |
+| `@tanstack/react-query`  | Cache + async state + optimistic updates |
+| `@tanstack/react-router` | File-based routing                       |
+| `zustand`                | Global state                             |
+| `tailwindcss`            | Styling                                  |
+| `tinykeys`               | Keyboard shortcuts                       |
+| `@tiptap/react`          | Rich text editor                         |
 
 ---
 
 ## 12. Implementation Phases
 
 ### Phase 0 — OAuth Verification (long lead time, start immediately)
+
 **Goal:** Unblock public release by completing provider verification in parallel with development.
 
 - [ ] Register Google Cloud project, configure OAuth consent screen
@@ -974,6 +1030,7 @@ Note: `effect/Schema` replaces Zod for all validation. `effect/unstable/httpapi`
 Note: During development, use the unverified Google app with manually-added test users. The verification/audit process runs in parallel and does not block any coding work — but it takes weeks, so start early.
 
 ### Phase 1 — Foundation (MVP)
+
 **Goal:** Browse one Gmail account's INBOX in a web UI.
 
 - [ ] SQLite schema + Drizzle setup
@@ -987,6 +1044,7 @@ Note: During development, use the unverified Google app with manually-added test
 - [ ] Email body viewer (iframe sandbox)
 
 ### Phase 2 — Interaction
+
 **Goal:** Full read/write workflow for Gmail and Outlook.
 
 - [ ] Outlook OAuth2 flow
@@ -998,6 +1056,7 @@ Note: During development, use the unverified Google app with manually-added test
 - [ ] Keyboard shortcuts (full set)
 
 ### Phase 3 — Generic Accounts
+
 **Goal:** Support standards-based non-Google/non-Microsoft mail accounts.
 
 - [ ] Generic IMAP/SMTP account type
@@ -1009,6 +1068,7 @@ Note: During development, use the unverified Google app with manually-added test
 - [ ] iCloud / Zoho / Fastmail validation pass
 
 ### Phase 4 — Real-Time + Search
+
 **Goal:** Live updates and fast search.
 
 - [ ] IMAP IDLE for push notifications (fiber per account, `Fiber.interrupt` to break IDLE)
@@ -1018,6 +1078,7 @@ Note: During development, use the unverified Google app with manually-added test
 - [ ] Search UI with result highlighting
 
 ### Phase 5 — Polish
+
 **Goal:** Superhuman-level feel.
 
 - [ ] Unified inbox view
@@ -1041,6 +1102,7 @@ Decisions are grouped by when they need to be made.
 #### Q1. OAuth2 redirect strategy on localhost
 
 **Options:**
+
 - **(a)** Temporary local listener on a random port
 - **(b)** Main server callback at `/auth/callback`
 - **(c)** Manual code paste fallback
@@ -1050,6 +1112,7 @@ Decisions are grouped by when they need to be made.
 #### Q2. Build tooling for the client bundle
 
 **Options:**
+
 - **(a)** Vite builds static assets into `dist/`, Effect `HttpStaticServer` serves them (SPA mode with index.html fallback)
 - **(b)** Bun bundling only
 - **(c)** Bun hot full-stack flow
@@ -1059,6 +1122,7 @@ Decisions are grouped by when they need to be made.
 #### Q3. Drizzle + bun:sqlite stability
 
 **Options:**
+
 - **(a)** Use Drizzle + `bun:sqlite`
 - **(b)** Fall back to `better-sqlite3`
 
@@ -1071,6 +1135,7 @@ Decisions are grouped by when they need to be made.
 #### Q5. Generic account setup model
 
 **Options:**
+
 - **(a)** Manual host entry only
 - **(b)** Autodiscovery + manual fallback
 
@@ -1081,6 +1146,7 @@ Decisions are grouped by when they need to be made.
 #### Q6. Message list pagination cursor
 
 **Options:**
+
 - **(a)** Date-based only
 - **(b)** Composite `(date, ULID)`
 - **(c)** Offset-based
@@ -1090,6 +1156,7 @@ Decisions are grouped by when they need to be made.
 #### Q7. Thread view vs. flat list default
 
 **Options:**
+
 - **(a)** Flat list default, thread view toggle
 - **(b)** Thread view default
 - **(c)** Per-folder setting
@@ -1099,6 +1166,7 @@ Decisions are grouped by when they need to be made.
 #### Q8. Optimistic updates for flag changes
 
 **Options:**
+
 - **(a)** Optimistic
 - **(b)** Pessimistic
 
@@ -1107,6 +1175,7 @@ Decisions are grouped by when they need to be made.
 #### Q9. How much autodiscovery to build in MVP
 
 **Options:**
+
 - **(a)** Presets + MX only
 - **(b)** Presets + MX + autoconfig + heuristics
 - **(c)** Full autodiscover ecosystem support
@@ -1118,6 +1187,7 @@ Decisions are grouped by when they need to be made.
 #### Q10. Remote image loading default
 
 **Options:**
+
 - **(a)** Block by default
 - **(b)** Load by default
 - **(c)** Proxy by default
@@ -1127,6 +1197,7 @@ Decisions are grouped by when they need to be made.
 #### Q11. Gmail label management depth
 
 **Options:**
+
 - **(a)** Read-only
 - **(b)** Add/remove labels
 - **(c)** Full label CRUD
@@ -1136,6 +1207,7 @@ Decisions are grouped by when they need to be made.
 #### Q12. Attachment upload flow for compose
 
 **Options:**
+
 - **(a)** Hold in browser memory
 - **(b)** Upload to temp directory and reference by ID
 - **(c)** Stream directly during send
@@ -1145,6 +1217,7 @@ Decisions are grouped by when they need to be made.
 #### Q13. Unified inbox implementation
 
 **Options:**
+
 - **(a)** Virtual folder with `UNION ALL`
 - **(b)** Dedicated cache table
 
@@ -1153,6 +1226,7 @@ Decisions are grouped by when they need to be made.
 #### Q14. Cross-device story
 
 **Options:**
+
 - **(a)** Bind on LAN and run centrally
 - **(b)** Tailscale / tunnel
 - **(c)** Sync SQLite file
@@ -1162,6 +1236,7 @@ Decisions are grouped by when they need to be made.
 #### Q15. Backup and portability
 
 **Options:**
+
 - **(a)** Built-in export
 - **(b)** Manual file copy docs
 - **(c)** No official story

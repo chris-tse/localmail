@@ -5,21 +5,26 @@ status: done
 # 001 — Project Scaffold
 
 ## Phase
+
 1 — Foundation (MVP)
 
 ## Goal
+
 Set up the monorepo structure, install all Phase 1 dependencies, configure TypeScript, and create the basic file tree. `bun run dev` should fully bootstrap the local development environment — no manual steps beyond `bun install && bun run dev`.
 
 ## Prerequisites
+
 - None (first task in the project)
 
 ## References
+
 - `TECH_SPEC.md` §10 — project structure
 - `TECH_SPEC.md` §11 — dependencies
 
 ## Scope
 
 ### 1. Configure package.json
+
 - Update `package.json` with project metadata (`name: "localmail"`, etc.)
 - Add scripts:
   - `dev` — single command that bootstraps everything (see §10 below)
@@ -33,6 +38,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
   - `typecheck` — `bunx tsc --noEmit`
 
 ### 2. Install server dependencies
+
 - `effect`
 - `@effect/platform`
 - `@effect/platform-bun`
@@ -43,6 +49,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
 - `ulid`
 
 ### 3. Install client dependencies
+
 - `react` + `react-dom`
 - `@tanstack/react-query`
 - `@tanstack/react-router`
@@ -51,6 +58,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
 - `tinykeys`
 
 ### 4. Install dev dependencies
+
 - `typescript`
 - `bun-types`
 - `@types/react` + `@types/react-dom`
@@ -60,6 +68,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
 - `@types/mailparser`
 
 ### 5. Configure TypeScript
+
 - Update `tsconfig.json`:
   - `strict: true`
   - Path aliases: `@server/*`, `@client/*`, `@shared/*`
@@ -67,6 +76,7 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
   - Target/module appropriate for Bun
 
 ### 6. Configure Vite
+
 - Create `vite.config.ts`:
   - React plugin
   - Tailwind CSS plugin
@@ -74,7 +84,9 @@ Set up the monorepo structure, install all Phase 1 dependencies, configure TypeS
   - Proxy API requests to Bun server in dev mode
 
 ### 7. Create directory skeleton
+
 Create empty directories and placeholder `index.ts` files per TECH_SPEC §10:
+
 ```
 src/server/db/
 src/server/api/
@@ -93,20 +105,25 @@ scripts/
 ```
 
 ### 8. Create .env.example
+
 Document development/build-time environment variables:
+
 - `GOOGLE_CLIENT_ID` (optional contributor/release-build override for the Localmail-owned OAuth desktop client; not required for mock-data development)
 - `ENCRYPTION_KEY` (optional — derived from machine if not set)
 
 Do not document `GOOGLE_CLIENT_SECRET` as part of the shipped Gmail desktop flow. Installed apps cannot keep a client secret confidential; Gmail OAuth uses PKCE instead.
 
 ### 9. Update .gitignore
+
 Add:
+
 - `data/*.db`
 - `dist/`
 - `.env`
 - `.env.local`
 
 ### 10. `bun run dev` bootstraps everything
+
 The `dev` script must be zero-config — a fresh clone should work with just `bun install && bun run dev`. The script should:
 
 1. **Create `data/` directory** if it doesn't exist
@@ -123,6 +140,7 @@ The `dev` script must be zero-config — a fresh clone should work with just `bu
 The seed data is for development only. The app should work fully offline with this mock data — browsing folders, reading messages, toggling flags (local DB only, no IMAP).
 
 ### 11. Create the seed script
+
 - Location: `scripts/seed.ts`
 - Idempotent: skip if accounts already exist
 - Generate realistic-looking email data:
@@ -135,6 +153,7 @@ The seed data is for development only. The app should work fully offline with th
 - Use this for UI development before any IMAP code exists
 
 ## Verification
+
 - `bun install` succeeds with no errors
 - `bun run dev` on a fresh clone:
   - Creates `data/localmail.db`
@@ -147,6 +166,7 @@ The seed data is for development only. The app should work fully offline with th
 - Mock data is visible when querying the DB directly
 
 ## Output
+
 - Updated `package.json`
 - `tsconfig.json`
 - `vite.config.ts`

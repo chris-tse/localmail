@@ -5,23 +5,28 @@ status: pending
 # 012 — Compose, Reply, Forward + SMTP Send
 
 ## Phase
+
 2 — Interaction
 
 ## Goal
+
 Build the compose UI with TipTap rich text editor, implement reply/reply-all/forward flows, and send emails via SMTP using Nodemailer.
 
 ## Prerequisites
+
 - 004-gmail-oauth2 (OAuth2 credentials for SMTP auth)
 - 006-api-routes (API infrastructure)
 - 009-email-viewer (message context for reply/forward)
 
 ## References
+
 - `TECH_SPEC.md` §7.1 — compose.send, compose.saveDraft
 - `TECH_SPEC.md` §8.1 — TipTap for rich text
 
 ## Scope
 
 ### 1. Create the SMTP send service
+
 - Location: `src/server/sync/smtp.ts` (or `src/server/compose/send.ts`)
 - Wrap Nodemailer transporter as an Effect service
 - Configure per-account:
@@ -35,6 +40,7 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
   5. Copy sent message to Sent folder via IMAP APPEND
 
 ### 2. Add compose API endpoints
+
 - `POST /compose/send` — send an email
   - Input: accountId, to, cc, bcc, subject, bodyHtml, bodyText, inReplyTo
   - Sets In-Reply-To and References headers for replies
@@ -42,6 +48,7 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
 - Handler: `src/server/api/compose.ts`
 
 ### 3. Build the Compose component
+
 - Location: `src/client/components/Compose/Compose.tsx`
 - Full-screen overlay or split panel (modal-style)
 - Fields:
@@ -54,6 +61,7 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
 - Close/discard: `Esc`
 
 ### 4. Set up TipTap editor
+
 - Location: `src/client/components/Compose/Editor.tsx`
 - Install: `@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/extension-link`
 - Features:
@@ -66,6 +74,7 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
 - Extract HTML version via `editor.getHTML()`
 
 ### 5. Implement reply/reply-all/forward
+
 - Reply:
   - Pre-fill To with original sender
   - Pre-fill Subject with `Re: <subject>`
@@ -80,11 +89,13 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
   - Attachments: note that forwarding attachments is Phase 5 scope
 
 ### 6. Wire compose triggers
+
 - `c` keyboard shortcut → open blank compose
 - Reply/Forward buttons in MessageViewer → open compose with context
 - Update Zustand store with compose state (open/closed, mode, context)
 
 ## Verification
+
 - Compose a new email and send it via SMTP
 - Email arrives at recipient's inbox
 - Reply to a message — correct headers, quoting
@@ -95,6 +106,7 @@ Build the compose UI with TipTap rich text editor, implement reply/reply-all/for
 - Sent message appears in Sent folder after IMAP APPEND
 
 ## Output
+
 - `src/server/compose/send.ts`
 - `src/server/api/compose.ts`
 - Updated `src/server/api/definition.ts`

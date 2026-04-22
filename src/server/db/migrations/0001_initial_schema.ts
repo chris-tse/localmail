@@ -1,10 +1,10 @@
-import * as Effect from "effect/Effect"
-import * as SqlClient from "effect/unstable/sql/SqlClient"
+import * as Effect from "effect/Effect";
+import * as SqlClient from "effect/unstable/sql/SqlClient";
 
 export default Effect.gen(function* () {
-  const sql = yield* SqlClient.SqlClient
+  const sql = yield* SqlClient.SqlClient;
 
-  yield* sql`PRAGMA foreign_keys = ON`
+  yield* sql`PRAGMA foreign_keys = ON`;
 
   // Accounts
   yield* sql`
@@ -42,9 +42,9 @@ export default Effect.gen(function* () {
       created_at      TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
     )
-  `
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_accounts_provider ON accounts(provider)`
+  `;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_accounts_provider ON accounts(provider)`;
 
   // Folders
   yield* sql`
@@ -70,9 +70,9 @@ export default Effect.gen(function* () {
 
       UNIQUE(account_id, path)
     )
-  `
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_folders_account ON folders(account_id)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_folders_role ON folders(account_id, role)`
+  `;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_folders_account ON folders(account_id)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_folders_role ON folders(account_id, role)`;
 
   // Messages
   yield* sql`
@@ -116,12 +116,12 @@ export default Effect.gen(function* () {
 
       UNIQUE(folder_id, uid)
     )
-  `
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_account ON messages(account_id)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_folder_date ON messages(folder_id, date DESC)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_message_id ON messages(internet_message_id)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(folder_id, is_read) WHERE is_read = 0`
+  `;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_account ON messages(account_id)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_folder_date ON messages(folder_id, date DESC)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_thread ON messages(thread_id)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_message_id ON messages(internet_message_id)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(folder_id, is_read) WHERE is_read = 0`;
 
   // Attachments
   yield* sql`
@@ -138,8 +138,8 @@ export default Effect.gen(function* () {
 
       disposition     TEXT
     )
-  `
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments(message_id)`
+  `;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_attachments_message ON attachments(message_id)`;
 
   // Contacts
   yield* sql`
@@ -152,9 +152,9 @@ export default Effect.gen(function* () {
 
       created_at      TEXT NOT NULL DEFAULT (datetime('now'))
     )
-  `
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)`
-  yield* sql`CREATE INDEX IF NOT EXISTS idx_contacts_frequency ON contacts(frequency DESC)`
+  `;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)`;
+  yield* sql`CREATE INDEX IF NOT EXISTS idx_contacts_frequency ON contacts(frequency DESC)`;
 
   // Full-Text Search
   yield* sql`
@@ -167,7 +167,7 @@ export default Effect.gen(function* () {
       content_rowid='rowid',
       tokenize='porter unicode61'
     )
-  `
+  `;
 
   // FTS triggers — use raw exec since triggers contain BEGIN/END blocks
   // that conflict with template literal parsing
@@ -176,13 +176,13 @@ export default Effect.gen(function* () {
       INSERT INTO messages_fts(rowid, subject, from_address, to_addresses, body_text)
       VALUES (new.rowid, new.subject, new.from_address, new.to_addresses, new.body_text);
     END
-  `
+  `;
   yield* sql`
     CREATE TRIGGER IF NOT EXISTS messages_fts_delete AFTER DELETE ON messages BEGIN
       INSERT INTO messages_fts(messages_fts, rowid, subject, from_address, to_addresses, body_text)
       VALUES ('delete', old.rowid, old.subject, old.from_address, old.to_addresses, old.body_text);
     END
-  `
+  `;
   yield* sql`
     CREATE TRIGGER IF NOT EXISTS messages_fts_update AFTER UPDATE ON messages BEGIN
       INSERT INTO messages_fts(messages_fts, rowid, subject, from_address, to_addresses, body_text)
@@ -190,5 +190,5 @@ export default Effect.gen(function* () {
       INSERT INTO messages_fts(rowid, subject, from_address, to_addresses, body_text)
       VALUES (new.rowid, new.subject, new.from_address, new.to_addresses, new.body_text);
     END
-  `
-})
+  `;
+});

@@ -5,16 +5,20 @@ status: pending
 # 004 — Gmail OAuth2 Flow
 
 ## Phase
+
 1 — Foundation (MVP)
 
 ## Goal
+
 Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: use the Localmail-owned Google OAuth desktop client, generate an auth URL with PKCE, handle the loopback callback, exchange the code for tokens without a shipped client secret, encrypt and store tokens locally, and verify IMAP/SMTP connectivity with the obtained credentials.
 
 ## Prerequisites
+
 - 002-database-setup (accounts table for storing credentials)
 - 003-effect-server (running HTTP server for callback route)
 
 ## References
+
 - `TECH_SPEC.md` §6.1 — OAuth2 flow
 - `TECH_SPEC.md` §6.3 — encryption at rest
 - `docs/decisions.md` — OAuth callback runs on the main server; development server port is `4000`
@@ -26,6 +30,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 ## Scope
 
 ### 0. Add Google OAuth client dependency
+
 - Add `google-auth-library`.
 - Use `OAuth2Client` for:
   - generating PKCE verifier/challenge via `generateCodeVerifierAsync()`
@@ -35,6 +40,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Do not hand-roll low-level OAuth parameter encoding unless the library cannot support a required detail.
 
 ### 1. Create the encryption module
+
 - Location: `src/server/auth/crypto.ts`
 - AES-256-GCM encryption/decryption functions
 - Key derivation: PBKDF2 from machine-specific seed (hostname + OS user)
@@ -44,6 +50,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Expose as an Effect service (`EncryptionService` Layer)
 
 ### 2. Create the Gmail OAuth2 provider
+
 - Location: `src/server/auth/providers/gmail.ts`
 - Use a Google OAuth **Desktop app** client owned by Localmail.
 - Package/build with the public Google OAuth client ID.
@@ -72,6 +79,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Open the URL in the user's system browser. Do not render Google OAuth inside an embedded Electron/Electrobun webview.
 
 ### 3. Create the OAuth2 orchestrator
+
 - Location: `src/server/auth/oauth2.ts`
 - Manages flow state (PKCE verifier, state parameter, provider, creation timestamp) in a short-lived in-memory Map keyed by `state`
 - Expires stale pending OAuth attempts
@@ -80,6 +88,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Expose as an Effect service (`OAuthService` Layer)
 
 ### 4. Add OAuth API endpoints
+
 - Add to `src/server/api/definition.ts`:
   - `POST /accounts/oauth/start` — returns `{ authUrl: string }` for Gmail
   - `GET /auth/callback` — handles the OAuth redirect, exchanges code, creates account
@@ -88,6 +97,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Missing Localmail OAuth client configuration should produce a clear maintainer/developer error, not a user setup flow.
 
 ### 5. Create the account creation flow
+
 - On successful OAuth callback:
   1. Validate `state` and recover the matching PKCE verifier
   2. Exchange code + verifier for tokens
@@ -103,6 +113,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - IMAP and SMTP tests run concurrently via `Effect.all`
 
 ### 6. Create maintainer OAuth setup docs/helper
+
 - Location: `scripts/setup-oauth-dev.ts` or docs under `docs/`
 - Purpose: maintainer/contributor setup only, not end-user setup.
 - Document:
@@ -115,6 +126,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Do not instruct normal users to create a Google Cloud project or copy credentials into `.env`.
 
 ## Key Decisions to Research
+
 - Exact redirect behavior for packaged desktop builds:
   - fixed main server port vs runtime-selected loopback port
   - `127.0.0.1` preferred over `localhost`
@@ -124,6 +136,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - Best way to open the system browser from Bun/Electrobun without embedding Google OAuth
 
 ## Verification
+
 - OAuth flow completes end-to-end with a real Gmail account
 - Flow uses the Localmail-owned OAuth client ID and does not require per-user Google Cloud setup
 - Token exchange succeeds with PKCE and without a shipped client secret
@@ -136,6 +149,7 @@ Implement the Gmail OAuth2 authentication flow for the packaged Localmail app: u
 - `bun test` passes (unit tests for crypto, token exchange mocking)
 
 ## Output
+
 - Updated `package.json` / lockfile with `google-auth-library`
 - `src/server/auth/crypto.ts`
 - `src/server/auth/oauth2.ts`

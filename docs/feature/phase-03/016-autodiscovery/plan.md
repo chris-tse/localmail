@@ -5,21 +5,26 @@ status: pending
 # 016 — Autodiscovery Pipeline
 
 ## Phase
+
 3 — Generic Accounts
 
 ## Goal
+
 Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, and hostname heuristics. Given an email address, determine the likely IMAP/SMTP settings without user intervention.
 
 ## Prerequisites
+
 - 015-generic-accounts (account creation flow that consumes discovery results)
 
 ## References
+
 - `TECH_SPEC.md` §4.2 — autodiscovery pipeline (5 layers)
 - `TECH_SPEC.md` §4.3 — discovery examples
 
 ## Scope
 
 ### 1. Create the provider registry (presets)
+
 - Location: `src/server/setup/registry.ts`
 - Hardcoded presets for known providers:
   - Gmail, Outlook (OAuth — redirect to OAuth flow)
@@ -30,6 +35,7 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
 - Match by exact domain first, then by MX pattern
 
 ### 2. Create the MX lookup module
+
 - Location: `src/server/setup/mx.ts`
 - Resolve MX records for the email domain using `dns.resolveMx`
 - Map MX exchange hosts to known providers:
@@ -40,6 +46,7 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
   - `*.messagingengine.com` → Fastmail
 
 ### 3. Create autoconfig support
+
 - Location: `src/server/setup/autodiscovery.ts`
 - Try `https://autoconfig.{domain}/mail/config-v1.1.xml`
 - Try `https://{domain}/.well-known/autoconfig/mail/config-v1.1.xml`
@@ -48,6 +55,7 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
 - Use `Effect.timeout("5 seconds")` to avoid stalling
 
 ### 4. Create hostname heuristics
+
 - Location: `src/server/setup/heuristics.ts`
 - Try common hostname patterns concurrently via `Effect.raceAll`:
   - `imap.{domain}:993`
@@ -60,6 +68,7 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
 - Return first successful combination
 
 ### 5. Compose the pipeline
+
 - Location: `src/server/setup/autodiscovery.ts`
 - Chain: presets → autoconfig → MX → heuristics → manual fallback
 - Use `Effect.orElse` to fall through on failure
@@ -70,10 +79,12 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
 - Add API endpoint: `GET /accounts/autodiscover?email=...`
 
 ### 6. Create connection test endpoint
+
 - `POST /accounts/test-connection` — test IMAP and SMTP with provided settings + credentials
 - Returns success/failure for each with error details
 
 ## Verification
+
 - `user@gmail.com` → detects Gmail preset (confidence 1.0)
 - `user@contoso.com` with Outlook MX → detects Microsoft 365
 - `user@christse.dev` with iCloud MX → detects iCloud settings
@@ -83,6 +94,7 @@ Implement the layered autodiscovery pipeline: presets, autoconfig, MX lookup, an
 - Connection test confirms settings work with real credentials
 
 ## Output
+
 - `src/server/setup/registry.ts`
 - `src/server/setup/mx.ts`
 - `src/server/setup/autodiscovery.ts`

@@ -6,6 +6,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 1: Confirm server prerequisites and package APIs
+
 - [ ] Verify `src/server/db/client.ts` exports the database layer used by the server entrypoint (`SqliteLive`)
 - [ ] Verify the installed `effect` and `@effect/platform-bun` versions expose the expected `HttpApi`, `HttpApiBuilder`, `BunHttpServer`, and `HttpStaticServer` modules
 - [ ] Document any API naming differences in this task file or update `plan.md` before implementing
@@ -17,6 +18,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 2: Create the HttpApi definition shell
+
 - [ ] Create `src/server/api/definition.ts`
 - [ ] Define `HealthGroup` with a `GET /health` endpoint named `check`
 - [ ] Define the success schema as `{ status: string }` using `effect/Schema`
@@ -29,6 +31,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 3: Implement the health handler layer
+
 - [ ] Create `src/server/api/health.ts`
 - [ ] Implement the `health` group with `HttpApiBuilder.group(Api, "health", ...)`
 - [ ] Return `{ status: "ok" }` from the `check` handler
@@ -41,6 +44,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 4: Export the shared API contract
+
 - [ ] Replace the placeholder in `src/shared/api.ts` with a re-export of the API definition
 - [ ] Ensure the shared export does not import server runtime code, database code, or handler layers
 - [ ] Keep the import path compatible with the existing Vite aliases
@@ -52,6 +56,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 5: Wire the Effect server entrypoint
+
 - [ ] Replace the temporary raw `HttpRouter` health route in `src/server/index.ts`
 - [ ] Compose the API implementation layer, `HttpApiBuilder.layer(Api)`, `SqliteLive`, and the Bun HTTP server layer
 - [ ] Bind the server to host `127.0.0.1` and port `4000`
@@ -65,6 +70,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 6: Serve built client assets with SPA fallback
+
 - [ ] Add `HttpStaticServer` serving `dist/client/`
 - [ ] Configure SPA fallback to `index.html` for client-side routes
 - [ ] Ensure API routes take precedence over static routes
@@ -77,6 +83,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 7: Add graceful shutdown handling
+
 - [ ] Handle `SIGINT` and `SIGTERM`
 - [ ] Ensure the Effect runtime scope is interrupted or disposed on shutdown
 - [ ] Log shutdown start and completion messages
@@ -89,6 +96,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 8: Write server smoke tests
+
 - [ ] Create a focused server/API smoke test if the current Effect HTTP API can be tested without a long-lived process
 - [ ] Test that the health handler returns `{ status: "ok" }`
 - [ ] Test that the shared API export loads without importing the server entrypoint
@@ -101,6 +109,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Final verification
+
 - [ ] `bunx tsc --noEmit` passes
 - [ ] `bun test` passes
 - [ ] `bun run build` passes
@@ -114,6 +123,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Manual E2E Testing
+
 - [ ] Start `bun run dev`
 - [ ] Open `http://localhost:5173/` and confirm the Vite app can reach the server through the `/api` proxy
 - [ ] Run `curl http://localhost:4000/health` and confirm the JSON health response

@@ -1,4 +1,4 @@
-import { createRoot } from "react-dom/client"
+import { createRoot } from "react-dom/client";
 
 function App() {
   return (
@@ -6,10 +6,10 @@ function App() {
       <h1>Localmail</h1>
       <p>Development scaffold running.</p>
     </div>
-  )
+  );
 }
 
-const root = document.getElementById("root")
+const root = document.getElementById("root");
 if (root) {
-  createRoot(root).render(<App />)
+  createRoot(root).render(<App />);
 }

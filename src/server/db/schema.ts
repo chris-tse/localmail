@@ -8,4 +8,4 @@ export const Tables = {
   attachments: "attachments",
   contacts: "contacts",
   messages_fts: "messages_fts",
-} as const
+} as const;

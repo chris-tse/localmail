@@ -6,6 +6,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 1: [Brief task description]
+
 - [ ] [Specific actionable step]
 - [ ] [Specific actionable step]
 
@@ -16,6 +17,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task 2: [Brief task description]
+
 - [ ] [Specific actionable step with details]
 - [ ] [Specific actionable step]
   - [ ] [Sub-step if needed]
@@ -28,6 +30,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Task N: Write tests
+
 - [ ] Create `src/server/feature-name.test.ts` (colocated with source file)
   - [ ] Test: [scenario description]
   - [ ] Test: [scenario description]
@@ -38,6 +41,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Final verification
+
 - [ ] `bunx tsc --noEmit` passes
 - [ ] `bun test` passes
 - [ ] All output files exist per plan.md
@@ -46,6 +50,7 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 ---
 
 ## Manual E2E Testing (if applicable)
+
 - [ ] [Test scenario description]
 - [ ] [Test scenario description]
 - [ ] [Error case to verify]

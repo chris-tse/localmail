@@ -5,16 +5,20 @@ status: pending
 # 005 — IMAP Sync Engine
 
 ## Phase
+
 1 — Foundation (MVP)
 
 ## Goal
+
 Build the core sync engine: connect to Gmail via IMAP, list folders, map special-use roles, and sync the most recent 30 days of messages from INBOX into SQLite. This is the data pipeline that populates the message list.
 
 ## Prerequisites
+
 - 002-database-setup (all tables: folders, messages, attachments, sync_state)
 - 004-gmail-oauth2 (stored OAuth2 credentials for IMAP auth)
 
 ## References
+
 - `TECH_SPEC.md` §5.1 — sync strategy (initial + delta)
 - `TECH_SPEC.md` §5.2 — provider adapter interface
 - `TECH_SPEC.md` §5.3 — Gmail quirks
@@ -24,6 +28,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 ## Scope
 
 ### 1. Create the IMAP connection wrapper
+
 - Location: `src/server/sync/connection.ts`
 - Wrap ImapFlow in an Effect `Scope`-managed resource:
   - On acquire: create ImapFlow client, connect, authenticate
@@ -33,18 +38,20 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - Gmail OAuth2 auth config: `{ user: email, accessToken }`
 
 ### 2. Create the provider adapter interface
+
 - Location: `src/server/providers/adapter.ts`
 - Define the `ProviderAdapter` service interface:
   ```ts
   interface ProviderAdapter {
-    mapFolderRole(path: string, attributes: string[]): FolderRole | null
-    normalizeMessage(raw: FetchMessageObject): NormalizedMessage
-    refreshAuth(account: Account): Effect<AuthCredentials, AuthError>
+    mapFolderRole(path: string, attributes: string[]): FolderRole | null;
+    normalizeMessage(raw: FetchMessageObject): NormalizedMessage;
+    refreshAuth(account: Account): Effect<AuthCredentials, AuthError>;
   }
   ```
 - Expose as an Effect `Context.Tag`
 
 ### 3. Create the Gmail adapter
+
 - Location: `src/server/providers/gmail.ts`
 - `mapFolderRole`:
   - `INBOX` → `inbox`
@@ -59,6 +66,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - `refreshAuth`: delegate to OAuthService
 
 ### 4. Create the folder sync logic
+
 - Location: `src/server/sync/engine.ts`
 - `syncFolders(accountId)`:
   1. `LIST "" "*"` — get all folders
@@ -67,6 +75,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
   4. Store uid_validity, uid_next from SELECT response
 
 ### 5. Create the message sync logic
+
 - In `src/server/sync/engine.ts`:
 - `syncMessages(folderId, options)`:
   1. SELECT the folder
@@ -84,6 +93,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
   8. Update `sync_state` cursors (last_uid, last_modseq)
 
 ### 6. Create the body fetch logic
+
 - `fetchBody(messageId)`:
   1. Fetch `BODY[]` for the message via IMAP
   2. Parse MIME with `mailparser`
@@ -93,6 +103,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - For INBOX initial sync: also fetch bodies for recent messages
 
 ### 7. Create the threading module
+
 - Location: `src/server/sync/threading.ts`
 - `assignThreadId(message, existingMessages)`:
   - Parse References header into array of Message-IDs
@@ -102,6 +113,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
   - Return deterministic thread_id (hash of root Message-ID)
 
 ### 8. Wire up the sync engine as an Effect Layer
+
 - `SyncEngineLayer` depends on: `SqliteLive`/`SqlClient`, `OAuthService`, `ProviderAdapter`
 - `startSync(accountId)`:
   1. Connect to IMAP
@@ -111,11 +123,13 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - Use `FiberMap<AccountId, void>` to manage one sync fiber per account
 
 ### 9. Create the MIME parser wrapper
+
 - Location: `src/server/sync/mime.ts`
 - Wrap `mailparser`'s `simpleParser` for body parsing
 - Extract: text body, HTML body, attachment metadata (filename, content-type, size, CID, part-id)
 
 ## Verification
+
 - Connect to a real Gmail account via IMAP with OAuth2
 - Folder list populated with correct roles
 - INBOX messages from last 30 days synced to SQLite
@@ -127,6 +141,7 @@ Build the core sync engine: connect to Gmail via IMAP, list folders, map special
 - `bun test` passes (unit tests for threading, MIME parsing, folder role mapping)
 
 ## Output
+
 - `src/server/sync/connection.ts`
 - `src/server/sync/engine.ts`
 - `src/server/sync/threading.ts`

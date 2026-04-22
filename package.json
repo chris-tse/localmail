@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun run scripts/dev.ts",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "build": "bunx vite build && bunx tsc --noEmit",
     "test": "bun test",
     "db:seed": "bun run scripts/seed.ts",

@@ -5,16 +5,20 @@ status: pending
 # 010 — Outlook OAuth2 Flow
 
 ## Phase
+
 2 — Interaction
 
 ## Goal
+
 Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for folder mapping and rate-limit-aware retry logic.
 
 ## Prerequisites
+
 - 004-gmail-oauth2 (OAuth2 infrastructure, crypto module)
 - 005-imap-sync-engine (provider adapter interface)
 
 ## References
+
 - `TECH_SPEC.md` §6.1 — OAuth2 flow (Outlook scopes)
 - `TECH_SPEC.md` §5.2 — provider adapter
 - `TECH_SPEC.md` §5.3 — Outlook quirks
@@ -22,6 +26,7 @@ Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for
 ## Scope
 
 ### 1. Create the Outlook OAuth2 provider
+
 - Location: `src/server/auth/providers/outlook.ts`
 - Microsoft identity platform endpoints:
   - Auth URL: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`
@@ -31,6 +36,7 @@ Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for
 - Token refresh via Microsoft-specific endpoint
 
 ### 2. Create the Outlook provider adapter
+
 - Location: `src/server/providers/outlook.ts`
 - `mapFolderRole`:
   - `Inbox` → `inbox`
@@ -43,6 +49,7 @@ Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for
 - Tag rate-limit errors as a distinct error type
 
 ### 3. Wire Outlook into account creation flow
+
 - Update `POST /accounts/oauth/start` to accept `provider: "gmail" | "outlook"`
 - Update callback handler to detect provider from OAuth state
 - Outlook preset settings:
@@ -51,12 +58,14 @@ Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for
   - `smtp_starttls: 1` (Outlook uses STARTTLS, not implicit TLS for SMTP)
 
 ### 4. Add env vars for Microsoft OAuth
+
 - Update `.env.example`:
   - `MICROSOFT_CLIENT_ID`
   - `MICROSOFT_CLIENT_SECRET`
 - Update `scripts/setup-oauth.ts` with Microsoft Azure AD app registration instructions
 
 ## Verification
+
 - OAuth flow completes with a real Outlook/Microsoft 365 account
 - Folder roles mapped correctly (especially `Junk Email` → `spam`)
 - IMAP sync works with Outlook OAuth2 credentials
@@ -64,6 +73,7 @@ Add Microsoft/Outlook OAuth2 support, including the Outlook provider adapter for
 - Rate-limit retry logic handles 429 responses gracefully
 
 ## Output
+
 - `src/server/auth/providers/outlook.ts`
 - `src/server/providers/outlook.ts`
 - Updated `src/server/api/accounts.ts`
