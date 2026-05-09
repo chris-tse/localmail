@@ -1,1 +1,1 @@
-// Re-export of API definition for client import
+export { Api } from "@server/api/definition";

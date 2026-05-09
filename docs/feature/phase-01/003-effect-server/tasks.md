@@ -7,9 +7,9 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 
 ## Task 1: Confirm server prerequisites and package APIs
 
-- [ ] Verify `src/server/db/client.ts` exports the database layer used by the server entrypoint (`SqliteLive`)
-- [ ] Verify the installed `effect` and `@effect/platform-bun` versions expose the expected `HttpApi`, `HttpApiBuilder`, `BunHttpServer`, and `HttpStaticServer` modules
-- [ ] Document any API naming differences in this task file or update `plan.md` before implementing
+- [x] Verify `src/server/db/client.ts` exports the database layer used by the server entrypoint (`SqliteLive`)
+- [x] Verify the installed `effect` and `@effect/platform-bun` versions expose the expected `HttpApi`, `HttpApiBuilder`, `BunHttpServer`, and `HttpStaticServer` modules
+- [x] Document any API naming differences in this task file or update `plan.md` before implementing
 
 **Files:** `src/server/db/client.ts`, `package.json`, `docs/feature/phase-01/003-effect-server/plan.md`
 **Depends on:** None
@@ -19,10 +19,10 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 
 ## Task 2: Create the HttpApi definition shell
 
-- [ ] Create `src/server/api/definition.ts`
-- [ ] Define `HealthGroup` with a `GET /health` endpoint named `check`
-- [ ] Define the success schema as `{ status: string }` using `effect/Schema`
-- [ ] Export `Api = HttpApi.make("Localmail").add(HealthGroup)`
+- [x] Create `src/server/api/definition.ts`
+- [x] Define `HealthGroup` with a `GET /health` endpoint named `check`
+- [x] Define the success schema as `{ status: string }` using `effect/Schema`
+- [x] Export `Api = HttpApi.make("Localmail").add(HealthGroup)`
 
 **File:** `src/server/api/definition.ts`
 **Depends on:** Task 1
@@ -32,10 +32,10 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 
 ## Task 3: Implement the health handler layer
 
-- [ ] Create `src/server/api/health.ts`
-- [ ] Implement the `health` group with `HttpApiBuilder.group(Api, "health", ...)`
-- [ ] Return `{ status: "ok" }` from the `check` handler
-- [ ] Keep the handler free of database dependencies so it can be used as a process liveness check
+- [x] Create `src/server/api/health.ts`
+- [x] Implement the `health` group with `HttpApiBuilder.group(Api, "health", ...)`
+- [x] Return `{ status: "ok" }` from the `check` handler
+- [x] Keep the handler free of database dependencies so it can be used as a process liveness check
 
 **File:** `src/server/api/health.ts`
 **Depends on:** Task 2
@@ -45,9 +45,9 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 
 ## Task 4: Export the shared API contract
 
-- [ ] Replace the placeholder in `src/shared/api.ts` with a re-export of the API definition
-- [ ] Ensure the shared export does not import server runtime code, database code, or handler layers
-- [ ] Keep the import path compatible with the existing Vite aliases
+- [x] Replace the placeholder in `src/shared/api.ts` with a re-export of the API definition
+- [x] Ensure the shared export does not import server runtime code, database code, or handler layers
+- [x] Keep the import path compatible with the existing Vite aliases
 
 **File:** `src/shared/api.ts`
 **Depends on:** Task 2
@@ -57,11 +57,11 @@ Status key: `[ ]` pending, `[~]` in progress, `[x]` done, `[-]` skipped/cancelle
 
 ## Task 5: Wire the Effect server entrypoint
 
-- [ ] Replace the temporary raw `HttpRouter` health route in `src/server/index.ts`
-- [ ] Compose the API implementation layer, `HttpApiBuilder.layer(Api)`, `SqliteLive`, and the Bun HTTP server layer
-- [ ] Bind the server to host `127.0.0.1` and port `4000`
-- [ ] Add startup logging that includes the listening URL
-- [ ] Keep the entrypoint compatible with `bun --hot src/server/index.ts` from `scripts/dev.ts`
+- [x] Replace the temporary raw `HttpRouter` health route in `src/server/index.ts`
+- [x] Compose the API implementation layer, `HttpApiBuilder.layer(Api)`, `SqliteLive`, and the Bun HTTP server layer
+- [x] Bind the server to host `127.0.0.1` and port `4000`
+- [x] Add startup logging that includes the listening URL
+- [x] Keep the entrypoint compatible with `bun --hot src/server/index.ts` from `scripts/dev.ts`
 
 **File:** `src/server/index.ts`
 **Depends on:** Tasks 2, 3, 4
